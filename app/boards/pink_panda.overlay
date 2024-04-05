@@ -40,13 +40,49 @@
 	pinctrl-1 = <&i2c0_sleep>;
 	pinctrl-names = "default", "sleep";
 
-	ti_tmp116: ti_tmp116@48 {
+	tmp117@48 {
 		compatible = "ti,tmp116";
 		reg = <0x48>;
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		eeprom: ti_tmp116_eeprom@0 {
+		tmp117_eeprom@0 {
+			compatible = "ti,tmp116-eeprom";
+			reg = <0x0>;
+			read-only;
+		};
+	};
+	tmp117@49 {
+		compatible = "ti,tmp116";
+		reg = <0x49>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		tmp117_eeprom@0 {
+			compatible = "ti,tmp116-eeprom";
+			reg = <0x0>;
+			read-only;
+		};
+	};
+	tmp117@4a {
+		compatible = "ti,tmp116";
+		reg = <0x4a>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		tmp117_eeprom@0 {
+			compatible = "ti,tmp116-eeprom";
+			reg = <0x0>;
+			read-only;
+		};
+	};
+	tmp117@4b {
+		compatible = "ti,tmp116";
+		reg = <0x4b>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		tmp117_eeprom@0 {
 			compatible = "ti,tmp116-eeprom";
 			reg = <0x0>;
 			read-only;
