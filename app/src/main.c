@@ -1,8 +1,13 @@
+#include <app_event_manager.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
 #include <zephyr/debug/thread_analyzer.h>
+
+#define MODULE main
+#include <caf/events/module_state_event.h>
+#include <caf/events/button_event.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
@@ -30,6 +35,12 @@ int main(void)
 
 	reset_cause = show_reset_cause();
 	clear_reset_cause();
+	
+	if (app_event_manager_init()) {
+		LOG_ERR("Event manager not initialized");
+	} else {
+		module_set_state(MODULE_STATE_READY);
+	}
 
 	LOG_INF("🎉 init done 🎉");
 
@@ -53,3 +64,21 @@ int main(void)
 
 	return 0;
 }
+
+static bool event_handler(const struct app_event_header *eh)
+{
+	const struct button_event *evt;
+
+	if (is_button_event(eh)) {
+		evt = cast_button_event(eh);
+
+		if (evt->pressed) {
+			LOG_INF("Pin Toggle");
+		}
+	}
+
+	return true;
+}
+
+APP_EVENT_LISTENER(MODULE, event_handler);
+APP_EVENT_SUBSCRIBE(MODULE, button_event);
