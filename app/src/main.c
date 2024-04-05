@@ -24,7 +24,15 @@ int main(void)
 #if defined(CONFIG_APP_SUSPEND_CONSOLE)
 	const struct device *cons = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
 #endif
+	const struct device *tmp117_devs[] = {
+		DEVICE_DT_GET(DT_INST(0, ti_tmp116)),
+		DEVICE_DT_GET(DT_INST(1, ti_tmp116)),
+		DEVICE_DT_GET(DT_INST(2, ti_tmp116)),
+		DEVICE_DT_GET(DT_INST(3, ti_tmp116)),
+	};
+
 	int ret;
+	int i;
 	uint32_t reset_cause;
 	int main_wdt_chan_id = -1;
 
@@ -40,6 +48,15 @@ int main(void)
 		LOG_ERR("Event manager not initialized");
 	} else {
 		module_set_state(MODULE_STATE_READY);
+	}
+
+	for (i = 0; i<4; i++) {
+		if (!device_is_ready(tmp117_devs[i])) {
+			LOG_ERR("%s: device not ready", tmp117_devs[i]->name);
+			return 1;
+		}
+		LOG_INF("Device %s - %p is ready",
+			tmp117_devs[i]->name, tmp117_devs[i]);
 	}
 
 	LOG_INF("🎉 init done 🎉");
