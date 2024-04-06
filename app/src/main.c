@@ -144,6 +144,8 @@ int main(void)
 					LOG_ERR("Could not get temperature");
 					return ret;
 				}
+
+				LOG_INF("🌡️  current temp: %g°C", temperatures[i]);
 			}
 		}
 
