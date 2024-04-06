@@ -83,7 +83,7 @@ int main(void)
 		return ret;
 	}
 
-	LOG_INF("🎉 init done 🎉");
+	LOG_INF("🆗 initialized");
 
 #if defined(CONFIG_APP_SUSPEND_CONSOLE)
 	ret = pm_device_action_run(cons, PM_DEVICE_ACTION_SUSPEND);
@@ -94,6 +94,10 @@ int main(void)
 #endif
 
 	thread_analyzer_print();
+
+	LOG_INF("┌──────────────────────────────────────────────────────────┐");
+	LOG_INF("│ Entering main loop                                       │");
+	LOG_INF("└──────────────────────────────────────────────────────────┘");
 
 	while (1) {
 		LOG_INF("💤 waiting for events");
