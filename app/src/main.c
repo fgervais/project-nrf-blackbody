@@ -10,6 +10,7 @@
 #define MODULE main
 #include <caf/events/module_state_event.h>
 #include <caf/events/button_event.h>
+#include <caf/key_id.h>
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
@@ -24,6 +25,10 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define BUTTON1_PRESS_EVENT		BIT(1)
 #define BUTTON2_PRESS_EVENT		BIT(2)
 #define BUTTON3_PRESS_EVENT		BIT(3)
+#define BUTTON_ALL_PRESS_EVENT		(BUTTON0_PRESS_EVENT | \
+					 BUTTON1_PRESS_EVENT | \
+					 BUTTON2_PRESS_EVENT | \
+					 BUTTON3_PRESS_EVENT)
 
 
 static K_EVENT_DEFINE(button_events);
@@ -129,13 +134,13 @@ int main(void)
 	while (1) {
 		LOG_INF("💤 waiting for events");
 		events = k_event_wait_all(&button_events,
-				(BUTTON0_PRESS_EVENT),
+				(BUTTON_ALL_PRESS_EVENT),
 				true,
 				K_SECONDS(CONFIG_APP_MAIN_LOOP_PERIOD_SEC));
 
 		LOG_INF("⏰ events: %08x", events);
 
-		if (events == BUTTON0_PRESS_EVENT) {
+		if (events == BUTTON_ALL_PRESS_EVENT) {
 			LOG_INF("handling button press event");
 			for (i = 0; i < ARRAY_SIZE(tmp117_devs); i++) {
 				ret = get_current_temperature(tmp117_devs[i],
@@ -165,7 +170,7 @@ static bool event_handler(const struct app_event_header *eh)
 
 		if (evt->pressed) {
 			LOG_INF("🛎️  Button pressed");
-			k_event_post(&button_events, BUTTON0_PRESS_EVENT);
+			k_event_post(&button_events, BIT(KEY_ROW(evt->key_id)));
 		}
 	}
 
