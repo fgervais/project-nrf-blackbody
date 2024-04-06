@@ -20,7 +20,10 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "watchdog.h"
 
 
-#define BUTTON_PRESS_EVENT		BIT(0)
+#define BUTTON0_PRESS_EVENT		BIT(0)
+#define BUTTON1_PRESS_EVENT		BIT(1)
+#define BUTTON2_PRESS_EVENT		BIT(2)
+#define BUTTON3_PRESS_EVENT		BIT(3)
 
 
 static K_EVENT_DEFINE(button_events);
@@ -76,6 +79,7 @@ int main(void)
 	uint32_t reset_cause;
 	int main_wdt_chan_id = -1;
 	uint32_t events;
+	double temperatures[ARRAY_SIZE(tmp117_devs)];
 
 	watchdog_init(wdt, &main_wdt_chan_id);
 
@@ -124,15 +128,23 @@ int main(void)
 
 	while (1) {
 		LOG_INF("💤 waiting for events");
-		events = k_event_wait(&button_events,
-				(BUTTON_PRESS_EVENT),
+		events = k_event_wait_all(&button_events,
+				(BUTTON0_PRESS_EVENT),
 				true,
 				K_SECONDS(CONFIG_APP_MAIN_LOOP_PERIOD_SEC));
 
 		LOG_INF("⏰ events: %08x", events);
 
-		if (events & BUTTON_PRESS_EVENT) {
+		if (events == BUTTON0_PRESS_EVENT) {
 			LOG_INF("handling button press event");
+			for (i = 0; i < ARRAY_SIZE(tmp117_devs); i++) {
+				ret = get_current_temperature(tmp117_devs[i],
+							      &temperatures[i]);
+				if (ret < 0) {
+					LOG_ERR("Could not get temperature");
+					return ret;
+				}
+			}
 		}
 
 		LOG_INF("🦴 feed watchdog");
@@ -151,7 +163,7 @@ static bool event_handler(const struct app_event_header *eh)
 
 		if (evt->pressed) {
 			LOG_INF("🛎️  Button pressed");
-			k_event_post(&button_events, BUTTON_PRESS_EVENT);
+			k_event_post(&button_events, BUTTON0_PRESS_EVENT);
 		}
 	}
 
