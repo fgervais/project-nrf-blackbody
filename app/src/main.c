@@ -1,5 +1,6 @@
 #include <app_event_manager.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
@@ -24,12 +25,22 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 static K_EVENT_DEFINE(button_events);
 
 
+int general_call_reset(const struct device *i2c_dev) {
+	uint8_t command = 0x06;
+	uint32_t num_bytes = 0x01;
+	uint16_t addr = 0x00;
+
+	return i2c_write(i2c_dev, &command, num_bytes, addr);
+}
+
+
 int main(void)
 {
 	const struct device *wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
 #if defined(CONFIG_APP_SUSPEND_CONSOLE)
 	const struct device *cons = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
 #endif
+	const struct device *i2c0 = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 	const struct device *tmp117_devs[] = {
 		DEVICE_DT_GET(DT_INST(0, ti_tmp116)),
 		DEVICE_DT_GET(DT_INST(1, ti_tmp116)),
@@ -63,6 +74,13 @@ int main(void)
 		}
 		LOG_INF("Device %s - %p is ready",
 			tmp117_devs[i]->name, tmp117_devs[i]);
+	}
+
+	LOG_INF("🎬 reset all tmp117s");
+	ret = general_call_reset(i2c0);
+	if (ret < 0) {
+		LOG_ERR("Could not send a general call reset");
+		return ret;
 	}
 
 	LOG_INF("🎉 init done 🎉");
