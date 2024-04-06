@@ -31,6 +31,9 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 					 BUTTON3_PRESS_EVENT)
 
 
+#define TMP117_CFGR_DR_ALERT		BIT(2)
+
+
 static K_EVENT_DEFINE(button_events);
 
 
@@ -63,6 +66,37 @@ int get_current_temperature(const struct device *const dev, double *temperature)
 	*temperature = sensor_value_to_double(&temp_value);
 
 	return 0;
+}
+
+int set_alert_pin_as_data_ready(const struct device *const dev) {
+	struct sensor_value config = { 0 };
+	int ret;
+
+        ret = sensor_attr_get(dev,
+                              SENSOR_CHAN_AMBIENT_TEMP,
+                              SENSOR_ATTR_CONFIGURATION,
+                              &config);
+        if (ret < 0) {
+        	LOG_ERR("Could not get configuration");
+        	return ret;
+        }
+
+        if (config.val1 & TMP117_CFGR_DR_ALERT) {
+        	return 0;
+        }
+
+        config.val1 |= TMP117_CFGR_DR_ALERT;
+
+        ret = sensor_attr_set(dev,
+                              SENSOR_CHAN_AMBIENT_TEMP,
+                              SENSOR_ATTR_CONFIGURATION,
+                              &config);
+        if (ret < 0) {
+        	LOG_ERR("Could not set configuration");
+        	return ret;
+        }
+
+        return 0;
 }
 
 int main(void)
@@ -106,6 +140,14 @@ int main(void)
 		}
 		LOG_INF("Device %s - %p is ready",
 			tmp117_devs[i]->name, tmp117_devs[i]);
+	}
+
+	for (i = 0; i < ARRAY_SIZE(tmp117_devs); i++) {
+		ret = set_alert_pin_as_data_ready(tmp117_devs[i]);
+		if (ret < 0) {
+			LOG_ERR("Could not configure tmp117 (#%d)", i);
+			return 1;
+		}
 	}
 
 	LOG_INF("🎬 reset all tmp117s");
