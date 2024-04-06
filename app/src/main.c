@@ -1,6 +1,7 @@
 #include <app_event_manager.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
@@ -33,6 +34,28 @@ int general_call_reset(const struct device *i2c_dev) {
 	return i2c_write(i2c_dev, &command, num_bytes, addr);
 }
 
+int get_current_temperature(const struct device *const dev, double *temperature)
+{
+	int ret;
+	struct sensor_value temp_value;
+
+	ret = sensor_sample_fetch(dev);
+	if (ret < 0) {
+		LOG_ERR("Failed to fetch measurements (%d)", ret);
+		return ret;
+	}
+
+	ret = sensor_channel_get(dev, SENSOR_CHAN_AMBIENT_TEMP,
+				 &temp_value);
+	if (ret < 0) {
+		LOG_ERR("Failed to get measurements (%d)", ret);
+		return ret;
+	}
+
+	*temperature = sensor_value_to_double(&temp_value);
+
+	return 0;
+}
 
 int main(void)
 {
