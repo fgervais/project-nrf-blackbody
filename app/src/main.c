@@ -106,6 +106,8 @@ int main(void)
 				true,
 				K_SECONDS(CONFIG_APP_MAIN_LOOP_PERIOD_SEC));
 
+		LOG_INF("⏰ events: %08x", events);
+
 		if (events & BUTTON_PRESS_EVENT) {
 			LOG_INF("handling button press event");
 		}
