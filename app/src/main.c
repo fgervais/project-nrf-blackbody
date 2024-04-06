@@ -18,6 +18,12 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "watchdog.h"
 
 
+#define BUTTON_PRESS_EVENT		BIT(0)
+
+
+static K_EVENT_DEFINE(button_events);
+
+
 int main(void)
 {
 	const struct device *wdt = DEVICE_DT_GET(DT_NODELABEL(wdt0));
@@ -35,7 +41,7 @@ int main(void)
 	int i;
 	uint32_t reset_cause;
 	int main_wdt_chan_id = -1;
-
+	uint32_t events;
 
 	watchdog_init(wdt, &main_wdt_chan_id);
 
@@ -72,11 +78,18 @@ int main(void)
 	thread_analyzer_print();
 
 	while (1) {
+		LOG_INF("💤 waiting for events");
+		events = k_event_wait(&button_events,
+				(BUTTON_PRESS_EVENT),
+				true,
+				K_SECONDS(CONFIG_APP_MAIN_LOOP_PERIOD_SEC));
+
+		if (events & BUTTON_PRESS_EVENT) {
+			LOG_INF("handling button press event");
+		}
+
 		LOG_INF("🦴 feed watchdog");
 		wdt_feed(wdt, main_wdt_chan_id);
-
-		LOG_INF("💤 sleeping until next loop");
-		k_sleep(K_SECONDS(CONFIG_APP_MAIN_LOOP_PERIOD_SEC));
 	}
 
 	return 0;
@@ -90,7 +103,8 @@ static bool event_handler(const struct app_event_header *eh)
 		evt = cast_button_event(eh);
 
 		if (evt->pressed) {
-			LOG_INF("Pin Toggle");
+			LOG_INF("🛎️  Button pressed");
+			k_event_post(&button_events, BUTTON_PRESS_EVENT);
 		}
 	}
 
