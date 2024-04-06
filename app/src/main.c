@@ -142,6 +142,7 @@ int main(void)
 			tmp117_devs[i]->name, tmp117_devs[i]);
 	}
 
+	LOG_INF("Setting ALERT pin as DATA READY");
 	for (i = 0; i < ARRAY_SIZE(tmp117_devs); i++) {
 		ret = set_alert_pin_as_data_ready(tmp117_devs[i]);
 		if (ret < 0) {
