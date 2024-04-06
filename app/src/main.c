@@ -90,7 +90,7 @@ int main(void)
 		module_set_state(MODULE_STATE_READY);
 	}
 
-	for (i = 0; i<4; i++) {
+	for (i = 0; i < ARRAY_SIZE(tmp117_devs); i++) {
 		if (!device_is_ready(tmp117_devs[i])) {
 			LOG_ERR("%s: device not ready", tmp117_devs[i]->name);
 			return 1;
