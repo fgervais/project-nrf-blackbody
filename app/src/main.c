@@ -65,10 +65,10 @@ int main(void)
 #endif
 	const struct device *i2c0 = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 	const struct device *tmp117_devs[] = {
-		DEVICE_DT_GET(DT_INST(0, ti_tmp116)),
-		DEVICE_DT_GET(DT_INST(1, ti_tmp116)),
-		DEVICE_DT_GET(DT_INST(2, ti_tmp116)),
-		DEVICE_DT_GET(DT_INST(3, ti_tmp116)),
+		DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(i2c0), tmp117_48)),
+		DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(i2c0), tmp117_49)),
+		DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(i2c0), tmp117_4a)),
+		DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(i2c0), tmp117_4b)),
 	};
 
 	int ret;
