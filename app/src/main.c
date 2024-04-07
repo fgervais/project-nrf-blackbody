@@ -33,8 +33,52 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define TMP117_CFGR_DR_ALERT		BIT(2)
 
 
+struct tmp117 {
+	const struct device *dev;
+	const struct gpio_dt_spec alert_pin;
+	struct gpio_callback callback;
+	uint32_t event;
+};
+
+
 static K_EVENT_DEFINE(button_events);
 
+static struct tmp117 tmp117s[] = {
+	{
+		.dev = DEVICE_DT_GET(tmp117_48_NODE),
+		.alert_pin = GPIO_DT_SPEC_GET(
+			DT_CHILD(tmp117_48_NODE, alert_pin), gpios),
+		.event = BUTTON0_PRESS_EVENT,
+	},
+	{
+		.dev = DEVICE_DT_GET(tmp117_49_NODE),
+		.alert_pin = GPIO_DT_SPEC_GET(
+			DT_CHILD(tmp117_49_NODE, alert_pin), gpios),
+		.event = BUTTON1_PRESS_EVENT,
+	},
+	{
+		.dev = DEVICE_DT_GET(tmp117_4a_NODE),
+		.alert_pin = GPIO_DT_SPEC_GET(
+			DT_CHILD(tmp117_4a_NODE, alert_pin), gpios),
+		.event = BUTTON2_PRESS_EVENT,
+	},
+	{
+		.dev = DEVICE_DT_GET(tmp117_4b_NODE),
+		.alert_pin = GPIO_DT_SPEC_GET(
+			DT_CHILD(tmp117_4b_NODE, alert_pin), gpios),
+		.event = BUTTON3_PRESS_EVENT,
+	},
+};
+
+
+static void alert(const struct device *port,
+		  struct gpio_callback *cb,
+		  gpio_port_pins_t pins)
+{
+	LOG_INF("🛎️  Button pressed");
+	// CONTAINER_OF() if original struct gpio_callback
+	// k_event_post(&button_events, BIT(KEY_ROW(evt->key_id)));
+}
 
 static int general_call_reset(const struct device *i2c_dev) {
 	uint8_t command = 0x06;
