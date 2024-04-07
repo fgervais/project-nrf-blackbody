@@ -66,31 +66,31 @@ int set_alert_pin_as_data_ready(const struct device *const dev) {
 	struct sensor_value config = { 0 };
 	int ret;
 
-        ret = sensor_attr_get(dev,
-                              SENSOR_CHAN_AMBIENT_TEMP,
-                              SENSOR_ATTR_CONFIGURATION,
-                              &config);
-        if (ret < 0) {
-        	LOG_ERR("Could not get configuration");
-        	return ret;
-        }
+	ret = sensor_attr_get(dev,
+			      SENSOR_CHAN_AMBIENT_TEMP,
+			      SENSOR_ATTR_CONFIGURATION,
+			      &config);
+	if (ret < 0) {
+		LOG_ERR("Could not get configuration");
+		return ret;
+	}
 
-        if (config.val1 & TMP117_CFGR_DR_ALERT) {
-        	return 0;
-        }
+	if (config.val1 & TMP117_CFGR_DR_ALERT) {
+		return 0;
+	}
 
-        config.val1 |= TMP117_CFGR_DR_ALERT;
+	config.val1 |= TMP117_CFGR_DR_ALERT;
 
-        ret = sensor_attr_set(dev,
-                              SENSOR_CHAN_AMBIENT_TEMP,
-                              SENSOR_ATTR_CONFIGURATION,
-                              &config);
-        if (ret < 0) {
-        	LOG_ERR("Could not set configuration");
-        	return ret;
-        }
+	ret = sensor_attr_set(dev,
+			      SENSOR_CHAN_AMBIENT_TEMP,
+			      SENSOR_ATTR_CONFIGURATION,
+			      &config);
+	if (ret < 0) {
+		LOG_ERR("Could not set configuration");
+		return ret;
+	}
 
-        return 0;
+	return 0;
 }
 
 int main(void)
