@@ -20,14 +20,14 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #define tmp117_4a_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_4a)
 #define tmp117_4b_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_4b)
 
-#define BUTTON0_PRESS_EVENT		BIT(0)
-#define BUTTON1_PRESS_EVENT		BIT(1)
-#define BUTTON2_PRESS_EVENT		BIT(2)
-#define BUTTON3_PRESS_EVENT		BIT(3)
-#define BUTTON_ALL_PRESS_EVENT		(BUTTON0_PRESS_EVENT | \
-					 BUTTON1_PRESS_EVENT | \
-					 BUTTON2_PRESS_EVENT | \
-					 BUTTON3_PRESS_EVENT)
+#define ALERT0_PRESS_EVENT		BIT(0)
+#define ALERT1_PRESS_EVENT		BIT(1)
+#define ALERT2_PRESS_EVENT		BIT(2)
+#define ALERT3_PRESS_EVENT		BIT(3)
+#define BUTTON_ALL_PRESS_EVENT		(ALERT0_PRESS_EVENT | \
+					 ALERT1_PRESS_EVENT | \
+					 ALERT2_PRESS_EVENT | \
+					 ALERT3_PRESS_EVENT)
 
 
 #define TMP117_CFGR_DR_ALERT		BIT(2)
@@ -41,32 +41,32 @@ struct tmp117 {
 };
 
 
-static K_EVENT_DEFINE(button_events);
+static K_EVENT_DEFINE(alert_events);
 
 static struct tmp117 tmp117s[] = {
 	{
 		.dev = DEVICE_DT_GET(tmp117_48_NODE),
 		.alert_pin = GPIO_DT_SPEC_GET(
 			DT_CHILD(tmp117_48_NODE, alert_pin), gpios),
-		.event = BUTTON0_PRESS_EVENT,
+		.event = ALERT0_PRESS_EVENT,
 	},
 	{
 		.dev = DEVICE_DT_GET(tmp117_49_NODE),
 		.alert_pin = GPIO_DT_SPEC_GET(
 			DT_CHILD(tmp117_49_NODE, alert_pin), gpios),
-		.event = BUTTON1_PRESS_EVENT,
+		.event = ALERT1_PRESS_EVENT,
 	},
 	{
 		.dev = DEVICE_DT_GET(tmp117_4a_NODE),
 		.alert_pin = GPIO_DT_SPEC_GET(
 			DT_CHILD(tmp117_4a_NODE, alert_pin), gpios),
-		.event = BUTTON2_PRESS_EVENT,
+		.event = ALERT2_PRESS_EVENT,
 	},
 	{
 		.dev = DEVICE_DT_GET(tmp117_4b_NODE),
 		.alert_pin = GPIO_DT_SPEC_GET(
 			DT_CHILD(tmp117_4b_NODE, alert_pin), gpios),
-		.event = BUTTON3_PRESS_EVENT,
+		.event = ALERT3_PRESS_EVENT,
 	},
 };
 
@@ -77,7 +77,7 @@ static void alert(const struct device *port,
 {
 	LOG_INF("🛎️  Button pressed");
 	// CONTAINER_OF() if original struct gpio_callback
-	// k_event_post(&button_events, BIT(KEY_ROW(evt->key_id)));
+	// k_event_post(&alert_events, BIT(KEY_ROW(evt->key_id)));
 }
 
 static int general_call_reset(const struct device *i2c_dev) {
@@ -222,7 +222,7 @@ int main(void)
 
 	while (1) {
 		LOG_INF("💤 waiting for events");
-		events = k_event_wait_all(&button_events,
+		events = k_event_wait_all(&alert_events,
 				(BUTTON_ALL_PRESS_EVENT),
 				true,
 				K_SECONDS(CONFIG_APP_MAIN_LOOP_PERIOD_SEC));
