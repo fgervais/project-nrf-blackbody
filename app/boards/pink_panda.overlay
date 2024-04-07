@@ -46,6 +46,11 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		alert_pin {
+			compatible = "alert-pin";
+			gpios = <&gpio0 2 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+
 		tmp117_eeprom@0 {
 			compatible = "ti,tmp116-eeprom";
 			reg = <0x0>;
@@ -57,6 +62,11 @@
 		reg = <0x49>;
 		#address-cells = <1>;
 		#size-cells = <0>;
+
+		alert_pin {
+			compatible = "alert-pin";
+			gpios = <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
 
 		tmp117_eeprom@0 {
 			compatible = "ti,tmp116-eeprom";
@@ -70,6 +80,11 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
+		alert_pin {
+			compatible = "alert-pin";
+			gpios = <&gpio1 13 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
+
 		tmp117_eeprom@0 {
 			compatible = "ti,tmp116-eeprom";
 			reg = <0x0>;
@@ -81,6 +96,11 @@
 		reg = <0x4b>;
 		#address-cells = <1>;
 		#size-cells = <0>;
+
+		alert_pin {
+			compatible = "alert-pin";
+			gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
+		};
 
 		tmp117_eeprom@0 {
 			compatible = "ti,tmp116-eeprom";

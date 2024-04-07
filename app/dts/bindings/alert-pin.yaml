@@ -1,0 +1,10 @@
+description: GPIO pin of a TMP117 alert pin
+
+compatible: "alert-pin"
+
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: |
+      The GPIO connected to the alert pin.

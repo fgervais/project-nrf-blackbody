@@ -15,6 +15,11 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "watchdog.h"
 
 
+#define tmp117_48_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_48)
+#define tmp117_49_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_49)
+#define tmp117_4a_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_4a)
+#define tmp117_4b_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_4b)
+
 #define BUTTON0_PRESS_EVENT		BIT(0)
 #define BUTTON1_PRESS_EVENT		BIT(1)
 #define BUTTON2_PRESS_EVENT		BIT(2)
@@ -101,10 +106,19 @@ int main(void)
 #endif
 	const struct device *i2c0 = DEVICE_DT_GET(DT_NODELABEL(i2c0));
 	const struct device *tmp117_devs[] = {
-		DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(i2c0), tmp117_48)),
-		DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(i2c0), tmp117_49)),
-		DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(i2c0), tmp117_4a)),
-		DEVICE_DT_GET(DT_CHILD(DT_NODELABEL(i2c0), tmp117_4b)),
+		DEVICE_DT_GET(tmp117_48_NODE),
+		DEVICE_DT_GET(tmp117_49_NODE),
+		DEVICE_DT_GET(tmp117_4a_NODE),
+		DEVICE_DT_GET(tmp117_4b_NODE),
+	};
+	// const struct device *gpio0 = DEVICE_DT_GET(DT_NODELABEL(gpio0));
+	// const struct device *gpio1 = DEVICE_DT_GET(DT_NODELABEL(gpio1));
+
+	const struct gpio_dt_spec alert_pins[] = {
+		GPIO_DT_SPEC_GET(DT_CHILD(tmp117_48_NODE, alert_pin), gpios),
+		GPIO_DT_SPEC_GET(DT_CHILD(tmp117_49_NODE, alert_pin), gpios),
+		GPIO_DT_SPEC_GET(DT_CHILD(tmp117_4a_NODE, alert_pin), gpios),
+		GPIO_DT_SPEC_GET(DT_CHILD(tmp117_4b_NODE, alert_pin), gpios),
 	};
 
 	int ret;
