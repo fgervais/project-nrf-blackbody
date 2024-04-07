@@ -31,7 +31,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 static K_EVENT_DEFINE(button_events);
 
 
-int general_call_reset(const struct device *i2c_dev) {
+static int general_call_reset(const struct device *i2c_dev) {
 	uint8_t command = 0x06;
 	uint32_t num_bytes = 0x01;
 	uint16_t addr = 0x00;
@@ -39,7 +39,7 @@ int general_call_reset(const struct device *i2c_dev) {
 	return i2c_write(i2c_dev, &command, num_bytes, addr);
 }
 
-int get_current_temperature(const struct device *const dev, double *temperature)
+static int get_current_temperature(const struct device *const dev, double *temperature)
 {
 	int ret;
 	struct sensor_value temp_value;
@@ -62,7 +62,7 @@ int get_current_temperature(const struct device *const dev, double *temperature)
 	return 0;
 }
 
-int set_alert_pin_as_data_ready(const struct device *const dev) {
+static int set_alert_pin_as_data_ready(const struct device *const dev) {
 	struct sensor_value config = { 0 };
 	int ret;
 
