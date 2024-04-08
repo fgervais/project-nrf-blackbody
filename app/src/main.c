@@ -186,9 +186,10 @@ int main(void)
 	clear_reset_cause();
 
 	for (i = 0; i < ARRAY_SIZE(tmp117s); i++) {
+		LOG_INF("🦄 configuring tmp117 #%d", i);
 		ret = configure_temperature_sensor(&tmp117s[i]);
 		if (ret < 0) {
-			LOG_ERR("Could not configure tmp117 #%d", i);
+			LOG_ERR("Could not configure tmp117");
 			return ret;
 		}
 	}
