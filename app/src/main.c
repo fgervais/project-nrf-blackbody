@@ -1,6 +1,8 @@
+#include <zephyr/drivers/eeprom.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/sensor.h>
+#include <zephyr/drivers/sensor/tmp116.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/kernel.h>
 #include <zephyr/pm/device.h>
@@ -36,8 +38,10 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 struct tmp117 {
 	const struct device *dev;
 	const struct gpio_dt_spec alert;
+	const struct device *eeprom;
 	struct gpio_callback callback;
 	uint32_t event;
+	char serial_number[12+1];
 };
 
 
@@ -48,24 +52,32 @@ static struct tmp117 tmp117s[] = {
 		.dev = DEVICE_DT_GET(TMP117_48_NODE),
 		.alert = GPIO_DT_SPEC_GET(
 			DT_CHILD(TMP117_48_NODE, alert), gpios),
+		.eeprom = DEVICE_DT_GET(
+			DT_CHILD(TMP117_48_NODE, tmp117_eeprom_0)),
 		.event = ALERT0_PRESS_EVENT,
 	},
 	{
 		.dev = DEVICE_DT_GET(TMP117_49_NODE),
 		.alert = GPIO_DT_SPEC_GET(
 			DT_CHILD(TMP117_49_NODE, alert), gpios),
+		.eeprom = DEVICE_DT_GET(
+			DT_CHILD(TMP117_49_NODE, tmp117_eeprom_0)),
 		.event = ALERT1_PRESS_EVENT,
 	},
 	{
 		.dev = DEVICE_DT_GET(TMP117_4a_NODE),
 		.alert = GPIO_DT_SPEC_GET(
 			DT_CHILD(TMP117_4a_NODE, alert), gpios),
+		.eeprom = DEVICE_DT_GET(
+			DT_CHILD(TMP117_4a_NODE, tmp117_eeprom_0)),
 		.event = ALERT2_PRESS_EVENT,
 	},
 	{
 		.dev = DEVICE_DT_GET(TMP117_4b_NODE),
 		.alert = GPIO_DT_SPEC_GET(
 			DT_CHILD(TMP117_4b_NODE, alert), gpios),
+		.eeprom = DEVICE_DT_GET(
+			DT_CHILD(TMP117_4b_NODE, tmp117_eeprom_0)),
 		.event = ALERT3_PRESS_EVENT,
 	},
 };
@@ -170,6 +182,38 @@ static int configure_alert_pin(struct tmp117 *sensor) {
 	return 0;
 }
 
+// https://e2e.ti.com/support/sensors-group/sensors/f/sensors-forum/815716/tmp117-reading-serial-number-from-eeprom
+// https://e2e.ti.com/support/sensors-group/sensors/f/sensors-forum/1000579/tmp117-tmp117-nist-byte-order-and-eeprom4-address
+static int get_tmp117_serial_as_string(const struct device *eeprom,
+				      char *sn_buf, size_t sn_buf_size)
+{
+	int ret;
+	uint8_t eeprom_content[EEPROM_TMP116_SIZE];
+
+	ret = eeprom_read(eeprom, 0, eeprom_content, sizeof(eeprom_content));
+	if (ret == 0) {
+		printk("eeprom content %02x%02x%02x%02x%02x%02x%02x%02x\n",
+		       eeprom_content[0], eeprom_content[1],
+		       eeprom_content[2], eeprom_content[3],
+		       eeprom_content[4], eeprom_content[5],
+		       eeprom_content[6], eeprom_content[7]);
+	} else {
+		printk("Failed to get eeprom content\n");
+	}
+
+	ret = snprintf(sn_buf, sn_buf_size,
+		       "%02x%02x%02x%02x%02x%02x",
+		       eeprom_content[0], eeprom_content[1],
+		       eeprom_content[2], eeprom_content[3],
+		       eeprom_content[6], eeprom_content[7]);
+	if (ret < 0 && ret >= sn_buf_size) {
+		LOG_ERR("Could not set sn_buf");
+		return -ENOMEM;
+	}
+
+	LOG_INF("SCD4x serial number: %s", sn_buf);
+	return 0;
+}
 
 static int configure_temperature_sensor(struct tmp117 *sensor) {
 	int ret;
@@ -180,6 +224,19 @@ static int configure_temperature_sensor(struct tmp117 *sensor) {
 	}
 	LOG_INF("Device %s - %p is ready",
 		sensor->dev->name, sensor->dev);
+
+	if (!device_is_ready(sensor->eeprom)) {
+		LOG_ERR("%s: device not ready", sensor->eeprom->name);
+		return -ENODEV;
+	}
+
+	LOG_INF("🗒️ reading serial number");
+	ret = get_tmp117_serial_as_string(sensor->eeprom, sensor->serial_number,
+					  ARRAY_SIZE(sensor->serial_number));
+	if (ret < 0) {
+		LOG_ERR("Could not read serial number");
+		return ret;
+	}
 
 	ret = configure_alert_pin(sensor);
 	if (ret < 0) {
