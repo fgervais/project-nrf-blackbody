@@ -1,6 +1,6 @@
 description: GPIO pin of a TMP117 alert pin
 
-compatible: "alert-pin"
+compatible: "tmp117-alert"
 
 properties:
   gpios:

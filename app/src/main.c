@@ -15,10 +15,10 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 #include "watchdog.h"
 
 
-#define tmp117_48_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_48)
-#define tmp117_49_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_49)
-#define tmp117_4a_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_4a)
-#define tmp117_4b_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_4b)
+#define TMP117_48_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_48)
+#define TMP117_49_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_49)
+#define TMP117_4a_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_4a)
+#define TMP117_4b_NODE			DT_CHILD(DT_NODELABEL(i2c0), tmp117_4b)
 
 #define ALERT0_PRESS_EVENT		BIT(0)
 #define ALERT1_PRESS_EVENT		BIT(1)
@@ -35,7 +35,7 @@ LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
 
 struct tmp117 {
 	const struct device *dev;
-	const struct gpio_dt_spec alert_pin;
+	const struct gpio_dt_spec alert;
 	struct gpio_callback callback;
 	uint32_t event;
 };
@@ -45,35 +45,35 @@ static K_EVENT_DEFINE(alert_events);
 
 static struct tmp117 tmp117s[] = {
 	{
-		.dev = DEVICE_DT_GET(tmp117_48_NODE),
-		.alert_pin = GPIO_DT_SPEC_GET(
-			DT_CHILD(tmp117_48_NODE, alert_pin), gpios),
+		.dev = DEVICE_DT_GET(TMP117_48_NODE),
+		.alert = GPIO_DT_SPEC_GET(
+			DT_CHILD(TMP117_48_NODE, alert), gpios),
 		.event = ALERT0_PRESS_EVENT,
 	},
 	{
-		.dev = DEVICE_DT_GET(tmp117_49_NODE),
-		.alert_pin = GPIO_DT_SPEC_GET(
-			DT_CHILD(tmp117_49_NODE, alert_pin), gpios),
+		.dev = DEVICE_DT_GET(TMP117_49_NODE),
+		.alert = GPIO_DT_SPEC_GET(
+			DT_CHILD(TMP117_49_NODE, alert), gpios),
 		.event = ALERT1_PRESS_EVENT,
 	},
 	{
-		.dev = DEVICE_DT_GET(tmp117_4a_NODE),
-		.alert_pin = GPIO_DT_SPEC_GET(
-			DT_CHILD(tmp117_4a_NODE, alert_pin), gpios),
+		.dev = DEVICE_DT_GET(TMP117_4a_NODE),
+		.alert = GPIO_DT_SPEC_GET(
+			DT_CHILD(TMP117_4a_NODE, alert), gpios),
 		.event = ALERT2_PRESS_EVENT,
 	},
 	{
-		.dev = DEVICE_DT_GET(tmp117_4b_NODE),
-		.alert_pin = GPIO_DT_SPEC_GET(
-			DT_CHILD(tmp117_4b_NODE, alert_pin), gpios),
+		.dev = DEVICE_DT_GET(TMP117_4b_NODE),
+		.alert = GPIO_DT_SPEC_GET(
+			DT_CHILD(TMP117_4b_NODE, alert), gpios),
 		.event = ALERT3_PRESS_EVENT,
 	},
 };
 
 
-static void alert(const struct device *port,
-		  struct gpio_callback *cb,
-		  gpio_port_pins_t pins)
+static void alert_callback(const struct device *port,
+			   struct gpio_callback *cb,
+			   gpio_port_pins_t pins)
 {
 	LOG_INF("🛎️  Button pressed");
 	// CONTAINER_OF() if original struct gpio_callback
@@ -142,6 +142,33 @@ static int set_alert_pin_as_data_ready(struct tmp117 *sensor) {
 	return 0;
 }
 
+static int configure_alert_pin(struct tmp117 *sensor) {
+	int ret;
+
+	ret = gpio_pin_configure_dt(&sensor->alert, GPIO_INPUT);
+	if (ret < 0) {
+		LOG_ERR("Could not configure gpio");
+		return ret;
+	}
+
+	ret = gpio_pin_interrupt_configure_dt(&sensor->alert,
+					      GPIO_INT_EDGE_FALLING);
+	if (ret < 0) {
+		LOG_ERR("Could not configure interrupt");
+		return ret;
+	}
+
+	gpio_init_callback(&sensor->callback, alert_callback,
+			   BIT(sensor->alert.pin));
+	ret = gpio_add_callback_dt(&sensor->alert, &sensor->callback);
+	if (ret < 0) {
+		LOG_ERR("Could not add callback");
+		return ret;
+	}
+
+	return 0;
+}
+
 
 static int configure_temperature_sensor(struct tmp117 *sensor) {
 	int ret;
@@ -152,6 +179,12 @@ static int configure_temperature_sensor(struct tmp117 *sensor) {
 	}
 	LOG_INF("Device %s - %p is ready",
 		sensor->dev->name, sensor->dev);
+
+	ret = configure_alert_pin(sensor);
+	if (ret < 0) {
+		LOG_ERR("Could not configure alert pin");
+		return ret;
+	}
 
 	LOG_INF("Setting ALERT pin as DATA READY");
 	ret = set_alert_pin_as_data_ready(sensor);

@@ -46,8 +46,8 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		alert_pin {
-			compatible = "alert-pin";
+		alert {
+			compatible = "tmp117-alert";
 			gpios = <&gpio0 2 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 		};
 
@@ -63,8 +63,8 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		alert_pin {
-			compatible = "alert-pin";
+		alert {
+			compatible = "tmp117-alert";
 			gpios = <&gpio1 15 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 		};
 
@@ -80,8 +80,8 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		alert_pin {
-			compatible = "alert-pin";
+		alert {
+			compatible = "tmp117-alert";
 			gpios = <&gpio1 13 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 		};
 
@@ -97,8 +97,8 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		alert_pin {
-			compatible = "alert-pin";
+		alert {
+			compatible = "tmp117-alert";
 			gpios = <&gpio0 3 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 		};
 
