@@ -211,7 +211,7 @@ static int get_tmp117_serial_as_string(const struct device *eeprom,
 		return -ENOMEM;
 	}
 
-	LOG_INF("SCD4x serial number: %s", sn_buf);
+	LOG_INF("TMP117 serial number: %s", sn_buf);
 	return 0;
 }
 
