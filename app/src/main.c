@@ -75,9 +75,10 @@ static void alert_callback(const struct device *port,
 			   struct gpio_callback *cb,
 			   gpio_port_pins_t pins)
 {
+	struct tmp117 *sensor = CONTAINER_OF(cb, struct tmp117, callback);
+
 	LOG_INF("🛎️  Button pressed");
-	// CONTAINER_OF() if original struct gpio_callback
-	// k_event_post(&alert_events, BIT(KEY_ROW(evt->key_id)));
+	k_event_post(&alert_events, sensor->event);
 }
 
 static int general_call_reset(const struct device *i2c_dev) {
