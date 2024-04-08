@@ -88,18 +88,18 @@ static int general_call_reset(const struct device *i2c_dev) {
 	return i2c_write(i2c_dev, &command, num_bytes, addr);
 }
 
-static int get_current_temperature(const struct device *const dev, double *temperature)
+static int get_current_temperature(struct tmp117 *sensor, double *temperature)
 {
 	int ret;
 	struct sensor_value temp_value;
 
-	ret = sensor_sample_fetch(dev);
+	ret = sensor_sample_fetch(sensor->dev);
 	if (ret < 0) {
 		LOG_ERR("Failed to fetch measurements (%d)", ret);
 		return ret;
 	}
 
-	ret = sensor_channel_get(dev, SENSOR_CHAN_AMBIENT_TEMP,
+	ret = sensor_channel_get(sensor->dev, SENSOR_CHAN_AMBIENT_TEMP,
 				 &temp_value);
 	if (ret < 0) {
 		LOG_ERR("Failed to get measurements (%d)", ret);
@@ -111,11 +111,11 @@ static int get_current_temperature(const struct device *const dev, double *tempe
 	return 0;
 }
 
-static int set_alert_pin_as_data_ready(const struct device *const dev) {
+static int set_alert_pin_as_data_ready(struct tmp117 *sensor) {
 	struct sensor_value config = { 0 };
 	int ret;
 
-	ret = sensor_attr_get(dev,
+	ret = sensor_attr_get(sensor->dev,
 			      SENSOR_CHAN_AMBIENT_TEMP,
 			      SENSOR_ATTR_CONFIGURATION,
 			      &config);
@@ -130,12 +130,33 @@ static int set_alert_pin_as_data_ready(const struct device *const dev) {
 
 	config.val1 |= TMP117_CFGR_DR_ALERT;
 
-	ret = sensor_attr_set(dev,
+	ret = sensor_attr_set(sensor->dev,
 			      SENSOR_CHAN_AMBIENT_TEMP,
 			      SENSOR_ATTR_CONFIGURATION,
 			      &config);
 	if (ret < 0) {
 		LOG_ERR("Could not set configuration");
+		return ret;
+	}
+
+	return 0;
+}
+
+
+static int configure_temperature_sensor(struct tmp117 *sensor) {
+	int ret;
+
+	if (!device_is_ready(sensor->dev)) {
+		LOG_ERR("%s: device not ready", sensor->dev->name);
+		return -ENODEV;
+	}
+	LOG_INF("Device %s - %p is ready",
+		sensor->dev->name, sensor->dev);
+
+	LOG_INF("Setting ALERT pin as DATA READY");
+	ret = set_alert_pin_as_data_ready(sensor);
+	if (ret < 0) {
+		LOG_ERR("Could not configure %s", sensor->dev->name);
 		return ret;
 	}
 
@@ -149,28 +170,13 @@ int main(void)
 	const struct device *cons = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
 #endif
 	const struct device *i2c0 = DEVICE_DT_GET(DT_NODELABEL(i2c0));
-	const struct device *tmp117_devs[] = {
-		DEVICE_DT_GET(tmp117_48_NODE),
-		DEVICE_DT_GET(tmp117_49_NODE),
-		DEVICE_DT_GET(tmp117_4a_NODE),
-		DEVICE_DT_GET(tmp117_4b_NODE),
-	};
-	// const struct device *gpio0 = DEVICE_DT_GET(DT_NODELABEL(gpio0));
-	// const struct device *gpio1 = DEVICE_DT_GET(DT_NODELABEL(gpio1));
-
-	const struct gpio_dt_spec alert_pins[] = {
-		GPIO_DT_SPEC_GET(DT_CHILD(tmp117_48_NODE, alert_pin), gpios),
-		GPIO_DT_SPEC_GET(DT_CHILD(tmp117_49_NODE, alert_pin), gpios),
-		GPIO_DT_SPEC_GET(DT_CHILD(tmp117_4a_NODE, alert_pin), gpios),
-		GPIO_DT_SPEC_GET(DT_CHILD(tmp117_4b_NODE, alert_pin), gpios),
-	};
 
 	int ret;
 	int i;
 	uint32_t reset_cause;
 	int main_wdt_chan_id = -1;
 	uint32_t events;
-	double temperatures[ARRAY_SIZE(tmp117_devs)];
+	double temperatures[ARRAY_SIZE(tmp117s)];
 
 	watchdog_init(wdt, &main_wdt_chan_id);
 
@@ -179,21 +185,11 @@ int main(void)
 	reset_cause = show_reset_cause();
 	clear_reset_cause();
 
-	for (i = 0; i < ARRAY_SIZE(tmp117_devs); i++) {
-		if (!device_is_ready(tmp117_devs[i])) {
-			LOG_ERR("%s: device not ready", tmp117_devs[i]->name);
-			return 1;
-		}
-		LOG_INF("Device %s - %p is ready",
-			tmp117_devs[i]->name, tmp117_devs[i]);
-	}
-
-	LOG_INF("Setting ALERT pin as DATA READY");
-	for (i = 0; i < ARRAY_SIZE(tmp117_devs); i++) {
-		ret = set_alert_pin_as_data_ready(tmp117_devs[i]);
+	for (i = 0; i < ARRAY_SIZE(tmp117s); i++) {
+		ret = configure_temperature_sensor(&tmp117s[i]);
 		if (ret < 0) {
-			LOG_ERR("Could not configure tmp117 (#%d)", i);
-			return 1;
+			LOG_ERR("Could not configure tmp117 #%d", i);
+			return ret;
 		}
 	}
 
@@ -231,8 +227,8 @@ int main(void)
 
 		if (events == BUTTON_ALL_PRESS_EVENT) {
 			LOG_INF("handling button press event");
-			for (i = 0; i < ARRAY_SIZE(tmp117_devs); i++) {
-				ret = get_current_temperature(tmp117_devs[i],
+			for (i = 0; i < ARRAY_SIZE(tmp117s); i++) {
+				ret = get_current_temperature(&tmp117s[i],
 							      &temperatures[i]);
 				if (ret < 0) {
 					LOG_ERR("Could not get temperature");
