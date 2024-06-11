@@ -5,12 +5,6 @@ config APP_SUSPEND_CONSOLE
 	help
 	  Suspend console.
 
-config APP_WATCHDOG_TIMEOUT_SEC
-	int "Watchdog timeout (sec)"
-	default 30
-	help
-	  Watchdog timeout in seconds.
-
 config APP_MAIN_LOOP_PERIOD_SEC
 	int "Main loop period (sec)"
 	default 10

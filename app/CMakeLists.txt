@@ -1,9 +1,3 @@
-#-------------------------------------------------------------------------------
-# Zephyr Example Application
-#
-# Copyright (c) 2022 François Gervais
-# SPDX-License-Identifier: Apache-2.0
-
 # set(OVERLAY_CONFIG "secret.conf")
 
 cmake_minimum_required(VERSION 3.20.0)
@@ -22,9 +16,10 @@ project(app LANGUAGES C VERSION ${VERSION})
 
 
 configure_file(app_version.h.in ${CMAKE_BINARY_DIR}/app/include/app_version.h)
+zephyr_include_directories(
+    ${CMAKE_BINARY_DIR}/app/include
+)
 target_include_directories(app PRIVATE ${CMAKE_BINARY_DIR}/app/include src)
 
 target_sources(app PRIVATE
-        src/reset.c
-        src/watchdog.c
         src/main.c)
